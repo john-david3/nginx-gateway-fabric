@@ -1,0 +1,16 @@
+name: test
+
+on:
+  workflow_dispatch:
+    inputs:
+      agent-branch:
+        description: 'Agent to test'
+        required: true
+        type: string
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout agent
+        run: echo "test"
