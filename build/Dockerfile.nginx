@@ -63,7 +63,8 @@ FROM alpine:3.24
 ARG NGINX_VERSION
 
 # renovate: datasource=github-tags depName=nginx/agent
-ARG NGINX_AGENT_VERSION=v3.12.3
+ARG NGINX_AGENT_VERSION=v3.12.2
+ARG NGINX_AGENT_BRANCH=release-3.12.3
 ARG NJS_DIR
 ARG NGINX_CONF_DIR
 ARG BUILD_AGENT
@@ -87,9 +88,21 @@ RUN --mount=type=secret,id=nginx-pkg-hosts,required=false \
        fi \
     && alpine="v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)" \
     && printf "%s\n" "https://${NGINX_OSS_PKG_HOST}/nginx/mainline/alpine/${alpine}/main" >> "${repos}" \
-    && printf "%s\n" "https://${NGINX_AGENT_PKG_HOST}/nginx-agent/alpine/${alpine}/main" >> "${repos}" \
-    && apk add --no-cache --repositories-file "${repos}" nginx~=${NGINX_VERSION} nginx-module-njs nginx-module-otel nginx-agent=${NGINX_AGENT_VERSION#v} \
+    && apk add --no-cache --repositories-file "${repos}" nginx~=${NGINX_VERSION} nginx-module-njs nginx-module-otel \
     && rm -f /tmp/repositories
+
+# Build nginx-agent from source using the selected branch.
+RUN apk add --no-cache ca-certificates git go make \
+    && update-ca-certificates \
+    && git clone --branch "${NGINX_AGENT_BRANCH}" --depth 1 https://github.com/nginx/agent.git /tmp/agent \
+    && cd /tmp/agent \
+    && make build \
+    && cp build/nginx-agent /usr/bin/nginx-agent \
+    && mkdir -p /etc/nginx-agent \
+    && cp nginx-agent.conf /etc/nginx-agent/ \
+    && cd / \
+    && rm -rf /tmp/agent \
+    && apk del git go make
 
 RUN apk add --no-cache bash ca-certificates \
     && mkdir -p /usr/lib/nginx/modules \

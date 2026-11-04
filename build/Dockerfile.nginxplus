@@ -59,7 +59,8 @@ FROM alpine:3.24
 
 ARG NGINX_PLUS_VERSION=R37.2
 # renovate: datasource=github-tags depName=nginx/agent
-ARG NGINX_AGENT_VERSION=v3.12.3
+ARG NGINX_AGENT_VERSION=v3.12.2
+ARG NGINX_AGENT_BRANCH=release-3.12.3
 ARG APP_PROTECT_VERSION=37.2.5.777
 ARG INCLUDE_NAP_WAF=false
 ARG NJS_DIR
@@ -97,13 +98,25 @@ RUN --mount=type=secret,id=nginx-repo.crt,dst=/etc/apk/cert.pem,mode=0644 \
        fi \
     && alpine="v$(grep -E -o '^[0-9]+\.[0-9]+' /etc/alpine-release)" \
     && printf "%s\n" "https://${NGINX_PLUS_PKG_HOST}/plus/${NGINX_PLUS_VERSION}/alpine/${alpine}/main" >> "${repos}" \
-    && printf "%s\n" "https://${NGINX_AGENT_PKG_HOST}/nginx-agent/alpine/${alpine}/main" >> "${repos}" \
     && if [ "${INCLUDE_NAP_WAF}" = "true" ]; then \
            printf "%s\n" "https://${NAP_WAF_PKG_HOST}/app-protect-x-plus/alpine/${alpine}/main" >> "${repos}" \
            && apk add --no-cache --repositories-file "${repos}" app-protect-module-plus~=${APP_PROTECT_VERSION}; \
        fi \
-    && apk add --no-cache --repositories-file "${repos}" nginx-plus nginx-plus-module-njs nginx-plus-module-otel nginx-agent=${NGINX_AGENT_VERSION#v} \
+    && apk add --no-cache --repositories-file "${repos}" nginx-plus nginx-plus-module-njs nginx-plus-module-otel \
     && rm -f /tmp/repositories
+
+# Build nginx-agent from source using the selected branch.
+RUN apk add --no-cache ca-certificates git go make \
+    && update-ca-certificates \
+    && git clone --branch "${NGINX_AGENT_BRANCH}" --depth 1 https://github.com/nginx/agent.git /tmp/agent \
+    && cd /tmp/agent \
+    && make build \
+    && cp build/nginx-agent /usr/bin/nginx-agent \
+    && mkdir -p /etc/nginx-agent \
+    && cp nginx-agent.conf /etc/nginx-agent/ \
+    && cd / \
+    && rm -rf /tmp/agent \
+    && apk del git go make
 
 RUN apk add --no-cache bash ca-certificates \
     && mkdir -p /usr/lib/nginx/modules \

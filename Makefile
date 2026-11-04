@@ -73,6 +73,7 @@ PLUS_LICENSE_FILE ?= $(SELF_DIR)license.jwt
 REGISTRY_JWT_FILE ?= $(SELF_DIR)dockerconfig.jwt## Path to the JWT file for the NGINX private registry
 NGINX_IMAGE_PULL_SECRET ?= nginx-plus-registry-secret## Image pull secret name for the NGINX Plus registry
 NGINX_IMAGE_PULL_SERVER ?= private-registry.nginx.com## Registry the image pull secret authenticates to
+NGINX_AGENT_BRANCH ?= release-3.12.3## Git branch used to build nginx-agent
 # Only set when images are pulled: a secret named but absent from the
 # cluster fails the install.
 HELM_PULL_SECRET_PARAMETERS = $(if $(filter registry,$(IMAGE_SOURCE)),--set nginx.imagePullSecret=$(NGINX_IMAGE_PULL_SECRET) --set nginxGateway.serviceAccount.imagePullSecret=$(NGINX_IMAGE_PULL_SECRET))
@@ -80,7 +81,7 @@ PLUS_USAGE_ENDPOINT ?=## The N+ usage endpoint. For development, please set to t
 HELM_PARAMETERS ?=## Optional extra parameters for the Helm install
 # HELM_WAF_PARAMETERS = --set nginxGateway.plmStorage.url=f5-waf-seaweed-filer.nap5-helm-policy.svc.cluster.local:9333 --set nginxGateway.plmStorage.credentialsSecretName=nap5-helm-policy/f5-waf-seaweedfs-auth --set nginxGateway.plmStorage.tls.caSecretName=nap5-helm-policy/f5-waf-seaweedfs-ca-cert --set nginxGateway.plmStorage.tls.clientSSLSecretName=nap5-helm-policy/f5-waf-seaweedfs-client-cert --set nginxGateway.plmStorage.tls.insecureSkipVerify=true
 
-override NGINX_DOCKER_BUILD_OPTIONS += --build-arg NJS_DIR=$(NJS_DIR) --build-arg NGINX_CONF_DIR=$(NGINX_CONF_DIR) --build-arg BUILD_AGENT=$(BUILD_AGENT)
+override NGINX_DOCKER_BUILD_OPTIONS += --build-arg NJS_DIR=$(NJS_DIR) --build-arg NGINX_CONF_DIR=$(NGINX_CONF_DIR) --build-arg BUILD_AGENT=$(BUILD_AGENT) --build-arg NGINX_AGENT_BRANCH=$(NGINX_AGENT_BRANCH)
 
 .DEFAULT_GOAL := help
 
