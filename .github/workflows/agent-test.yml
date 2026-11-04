@@ -9,8 +9,15 @@ on:
         type: string
 
 jobs:
+  approval:
+    environment:
+      name: agent-branch-testing
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Approved"
+      
   test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout agent
-        run: echo "test"
+        run: echo "${{ inputs.agent-branch }}"
